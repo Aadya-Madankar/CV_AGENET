@@ -60,8 +60,15 @@ Asset found: "Mil gaya. Dekh raha hoon." → STOP. Run tool. Then give ONE direc
 
 <tools>
 \`list_available_assets\`: Check FIRST every session.
-\`get_document_content\`: Analyze resume. Give ONE direct fix instruction.
+\`get_document_content\`: Read the EXTRACTED content. Only reference what's actually there.
 \`generate_resume_pdf\`: When user says "bana do/ready/done". Say: "Bana raha hoon. Chat dekho." → Call tool.
+
+⚠️ CRITICAL - NO HALLUCINATION:
+- ONLY mention issues that are ACTUALLY in the extracted document content
+- If extracted content says "Has Photo: NO" → DO NOT say photo hatao
+- If something is "NOT FOUND" in extraction → DO NOT pretend it exists
+- Read the actual extracted content before giving feedback
+- If unsure about document content → ask user to confirm, don't assume
 </tools>
 
 <memory>
@@ -349,17 +356,69 @@ const App: React.FC = () => {
     addLog('INFO', `File type: ${mimeType}, Size: ${Math.round(fileData.length / 1024)}KB`);
 
     const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || process.env.API_KEY });
-    const prompt = `
-    ${MASTER_SYSTEM_PROMPT}
-    
-    TASK: Perform a Deep Audit on this document. Follow Rule #3 (Analysis).
-    `;
+
+    // Dedicated extraction prompt - DO NOT use system prompt here
+    const extractionPrompt = `
+You are a resume content extractor. Your job is to extract and analyze the ACTUAL content from this resume document.
+
+IMPORTANT RULES:
+1. ONLY report what is ACTUALLY in the document. DO NOT make up or hallucinate any content.
+2. If something is NOT in the document, say "NOT FOUND" - do not invent it.
+3. Extract the EXACT text, names, dates, companies, skills as they appear.
+4. Be accurate about what visual elements exist (photo, graphics, columns, etc.)
+
+EXTRACT THE FOLLOWING:
+
+## DOCUMENT ANALYSIS
+- Has Photo: [YES/NO - only say YES if you actually see a photo/image of a person]
+- Layout: [Single column / 2-column / Other]
+- Has Graphics/Icons: [YES/NO]
+
+## EXTRACTED CONTENT
+
+### Personal Info:
+- Name: [exact name from document]
+- Email: [exact email]
+- Phone: [exact phone]
+- Location: [exact location]
+- LinkedIn/Portfolio: [if present]
+
+### Professional Summary/Objective:
+[Extract exact text if present, or "NOT FOUND"]
+
+### Work Experience:
+[For each job, extract:
+- Company Name (exact)
+- Role/Title (exact)
+- Duration (exact dates)
+- Bullet points (exact text)]
+
+### Education:
+[Extract exact details]
+
+### Skills:
+[Extract exact skills listed]
+
+### Projects:
+[Extract exact projects if any]
+
+### Certifications:
+[Extract if any]
+
+## ATS ISSUES FOUND:
+[List actual issues based on what you SAW, not assumptions]
+
+## RECOMMENDED FIXES:
+[Based on ACTUAL content found]
+
+REMEMBER: Only report what is ACTUALLY in the document. If unsure, say "UNCLEAR" not a guess.
+`;
 
     try {
       // Use gemini-2.5-flash model for document processing
       const result = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: { parts: [{ text: prompt }, { inlineData: { mimeType, data: fileData } }] }
+        contents: { parts: [{ text: extractionPrompt }, { inlineData: { mimeType, data: fileData } }] }
       });
       const content = result.text || "";
       const url = `res://asset-${Date.now()}`;
@@ -370,12 +429,12 @@ const App: React.FC = () => {
       setFiles([...filesRef.current]);
 
       addLog('SUCCESS', `Deep Audit Complete: ${fileName}`);
-      addMessage('assistant', `मैंने "${fileName}" का पूरा Audit कर लिया है। अब हम इसे एक Winner Resume में बदलेंगे।`);
+      addMessage('assistant', `"${fileName}" ka audit ho gaya. Content extract ho gaya hai.`);
       addMessage('user', `Audit Target: ${fileName}`, [url]);
 
       if (liveStatusRef.current === LiveStatus.ACTIVE) {
         sessionPromiseRef.current?.then(s => {
-          s.sendRealtimeInput({ text: `[SYSTEM: New asset uploaded '${fileName}' at URL '${url}'. Use get_document_content immediately to critique it in voice.]` });
+          s.sendRealtimeInput({ text: `[SYSTEM: Resume "${fileName}" uploaded and analyzed. Here is the extracted content:\n\n${content}\n\nUse this ACTUAL extracted content to give feedback. DO NOT make up content that is not in the extraction above.]` });
         });
       }
       return { url, content };
