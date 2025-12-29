@@ -948,13 +948,48 @@ Before returning:
       micSourceRef.current = source;
       processorRef.current = scriptProcessor;
 
-      // Generate dynamic date context
+      // Generate dynamic date context - comprehensive
       const currentDate = new Date();
+      const dateOptions: Intl.DateTimeFormatOptions = {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'Asia/Kolkata'
+      };
+      const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Kolkata'
+      };
+
+      const formattedDate = currentDate.toLocaleDateString('en-IN', dateOptions);
+      const formattedTime = currentDate.toLocaleTimeString('en-IN', timeOptions);
+      const hour = currentDate.getHours();
+
+      // Determine time of day greeting
+      let timeOfDay = 'night';
+      if (hour >= 5 && hour < 12) timeOfDay = 'morning';
+      else if (hour >= 12 && hour < 17) timeOfDay = 'afternoon';
+      else if (hour >= 17 && hour < 21) timeOfDay = 'evening';
+
       const dateContext = `
-[CURRENT CONTEXT - IMPORTANT]
-TODAY'S DATE: ${currentDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
-CURRENT TIME: ${currentDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
-Use this to accurately judge if resume dates are past, present, or future.
+
+═══════════════════════════════════════════════════════════════
+## CURRENT DATE & TIME (LIVE - USE THIS!)
+═══════════════════════════════════════════════════════════════
+📅 DATE: ${formattedDate}
+⏰ TIME: ${formattedTime} IST
+🌙 TIME OF DAY: ${timeOfDay}
+📍 TIMEZONE: Asia/Kolkata (IST)
+
+**USE THIS FOR:**
+- Time-aware greetings ("Raat ke 4 baj gaye!" if late night)
+- Resume date validation (May 2025 is PAST if current year is 2025 December)
+- Urgency context ("Deadline kal hai?" makes sense if you know today's date)
+═══════════════════════════════════════════════════════════════
 `;
       const systemInstruction = MASTER_SYSTEM_PROMPT + dateContext;
 
@@ -968,7 +1003,8 @@ Use this to accurately judge if resume dates are past, present, or future.
             functionDeclarations: [
               { name: 'list_available_assets', description: 'Lists filenames/URLs in the current session.' },
               { name: 'get_document_content', description: 'Extracts deep text from a resume URL.', parameters: { type: Type.OBJECT, properties: { url: { type: Type.STRING } }, required: ['url'] } },
-              { name: 'generate_resume_pdf', description: 'Converts career data HTML into a PDF document.', parameters: { type: Type.OBJECT, properties: { html: { type: Type.STRING }, filename: { type: Type.STRING } }, required: ['html'] } }
+              { name: 'generate_resume_pdf', description: 'Converts career data HTML into a PDF document.', parameters: { type: Type.OBJECT, properties: { html: { type: Type.STRING }, filename: { type: Type.STRING } }, required: ['html'] } },
+              { name: 'get_current_datetime', description: 'Gets the current date and time in IST. Use this to know what time it is right now for time-aware responses.' }
             ]
           }],
           inputAudioTranscription: {}, outputAudioTranscription: {}
@@ -1016,6 +1052,37 @@ Use this to accurately judge if resume dates are past, present, or future.
                   setIsMinimized(true);
                   const url = await renderPDF((fc.args as any).html, (fc.args as any).filename || "Resume.pdf");
                   res = { status: "success", pdf_url: url };
+                } else if (fc.name === 'get_current_datetime') {
+                  const now = new Date();
+                  const dateStr = now.toLocaleDateString('en-IN', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                    timeZone: 'Asia/Kolkata'
+                  });
+                  const timeStr = now.toLocaleTimeString('en-IN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true,
+                    timeZone: 'Asia/Kolkata'
+                  });
+                  const hour = now.getHours();
+                  let timeOfDay = 'night (raat)';
+                  if (hour >= 5 && hour < 12) timeOfDay = 'morning (subah)';
+                  else if (hour >= 12 && hour < 17) timeOfDay = 'afternoon (dopahar)';
+                  else if (hour >= 17 && hour < 21) timeOfDay = 'evening (shaam)';
+
+                  res = {
+                    date: dateStr,
+                    time: timeStr,
+                    timezone: 'IST (Asia/Kolkata)',
+                    time_of_day: timeOfDay,
+                    iso: now.toISOString(),
+                    friendly: `It is ${timeStr} on ${dateStr}. Time of day: ${timeOfDay}.`
+                  };
+                  addLog('INFO', `Current DateTime: ${dateStr}, ${timeStr} IST`);
                 }
                 sessionPromise.then(s => s.sendToolResponse({ functionResponses: { id: fc.id, name: fc.name, response: res } }));
               }
