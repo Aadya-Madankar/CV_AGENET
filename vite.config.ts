@@ -26,16 +26,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       outDir: 'dist',
-      sourcemap: false,
-      minify: 'terser',
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            vendor: ['react', 'react-dom'],
-            genai: ['@google/genai'],
-          }
-        }
-      }
+      sourcemap: false
     }
   };
 });
