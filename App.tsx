@@ -202,7 +202,7 @@ const App: React.FC = () => {
     }
   };
 
-  // --- Search Grounding Chat (gemini-2.0-flash) ---
+  // --- Chat via N8N Webhook ---
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isTyping) return;
     const query = inputMessage;
@@ -210,66 +210,51 @@ const App: React.FC = () => {
     addMessage('user', query);
     setIsTyping(true);
 
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || process.env.API_KEY });
-    addLog('INFO', `Querying Search Grounding Core for career insights...`);
+    const N8N_WEBHOOK_URL = 'https://n8n-0.nudgit.ai/webhook/b2599ee9-6730-49d0-a58f-ac4a67e265ed';
+    addLog('INFO', `Connecting to Career Architect via N8N...`);
 
     try {
       const assetContext = filesRef.current.map(f => `DOCUMENT [${f.name}]: ${vectorStore.current[f.url]}`).join('\n\n');
-      const fullPrompt = `
-      ${MASTER_SYSTEM_PROMPT}
 
-      CONTEXT: 
-      Files in Session: ${assetContext}
-      User Input: ${query}
-      
-      TASK: Respond to the user's input. If they ask about trends or specific facts, use Google Search grounding. If they ask about their resumes, refer to the document context.
-      `;
-
-      // Using the correct format for Google Search grounding with gemini-2.5-flash-native-audio-preview-12-2025
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-native-audio-preview-12-2025',
-        contents: fullPrompt,
-        config: {
-          tools: [{ googleSearch: {} }]
-        }
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: query,
+          context: assetContext,
+          sessionId: 'cv_voice_agent_' + Date.now(),
+        }),
       });
 
-      const text = response.text || "I am analyzing that for you now...";
-
-      // Extract grounding metadata from the response
-      const candidate = response.candidates?.[0];
-      const groundingMetadata = candidate?.groundingMetadata;
-      const links: GroundingLink[] = [];
-
-      // Extract from groundingChunks if available
-      if (groundingMetadata?.groundingChunks) {
-        for (const chunk of groundingMetadata.groundingChunks) {
-          if (chunk.web) {
-            links.push({ uri: chunk.web.uri || '', title: chunk.web.title || '' });
-          }
-        }
+      if (!response.ok) {
+        throw new Error(`N8N request failed: ${response.status}`);
       }
 
-      // Also check webSearchQueries for context
-      if (groundingMetadata?.webSearchQueries && groundingMetadata.webSearchQueries.length > 0) {
-        addLog('INFO', `Search queries: ${groundingMetadata.webSearchQueries.join(', ')}`);
+      const data = await response.json();
+
+      // Parse response - handle different response formats from n8n
+      let text = '';
+      if (typeof data === 'string') {
+        text = data;
+      } else if (data.output) {
+        text = data.output;
+      } else if (data.message) {
+        text = data.message;
+      } else if (data.response) {
+        text = data.response;
+      } else if (data.text) {
+        text = data.text;
+      } else {
+        text = JSON.stringify(data);
       }
 
-      addMessage('assistant', text, undefined, links);
-      addLog('SUCCESS', `Search Grounding complete. ${links.length} sources linked.`);
+      addMessage('assistant', text || "I am analyzing that for you now...");
+      addLog('SUCCESS', `N8N response received successfully.`);
     } catch (err: any) {
-      addLog('ERROR', `Search Core failure: ${err?.message || err}`);
-
-      // Fallback to non-grounded response using the Master Prompt
-      try {
-        const fallbackResponse = await ai.models.generateContent({
-          model: 'gemini-2.5-flash-native-audio-preview-12-2025',
-          contents: `${MASTER_SYSTEM_PROMPT}\n\nUser Question: ${query}`
-        });
-        addMessage('assistant', fallbackResponse.text || "I'm looking into that for you!");
-      } catch (fallbackErr) {
-        addMessage('assistant', "Pardon me, had a minor glitch. What were we saying about your career?");
-      }
+      addLog('ERROR', `N8N request failed: ${err?.message || err}`);
+      addMessage('assistant', "Pardon me, had a minor glitch connecting to the server. What were we saying about your career?");
     } finally {
       setIsTyping(false);
     }
@@ -288,9 +273,9 @@ const App: React.FC = () => {
     `;
 
     try {
-      // Use the unified gemini-2.5-flash-native-audio-preview-12-2025 model
+      // Use gemini-2.5-flash model for document processing
       const result = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-native-audio-preview-12-2025',
+        model: 'gemini-2.5-flash',
         contents: { parts: [{ text: prompt }, { inlineData: { mimeType, data: fileData } }] }
       });
       const content = result.text || "";
