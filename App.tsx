@@ -669,7 +669,7 @@ const App: React.FC = () => {
     const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || process.env.API_KEY });
 
     // Dedicated extraction prompt - DO NOT use system prompt here
-    const resumeGatekeeperAndExtractorPrompt = `
+    const extractionPrompt = `
 You are **ResumeGatekeeper_Extractor**, a strict “resume/CV gatekeeper + content extractor” agent.
 
 Your role has two responsibilities:
