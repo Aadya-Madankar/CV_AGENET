@@ -164,9 +164,9 @@ const App: React.FC = () => {
       TASK: Respond to the user's input. If they ask about trends or specific facts, use Google Search grounding. If they ask about their resumes, refer to the document context.
       `;
 
-      // Using the correct format for Google Search grounding with gemini-2.0-flash
+      // Using the correct format for Google Search grounding with gemini-2.5-flash-native-audio-preview-12-2025
       const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash-native-audio-preview-12-2025',
         contents: fullPrompt,
         config: {
           tools: [{ googleSearch: {} }]
@@ -199,16 +199,15 @@ const App: React.FC = () => {
     } catch (err: any) {
       addLog('ERROR', `Search Core failure: ${err?.message || err}`);
 
-      // Fallback to non-grounded response
+      // Fallback to non-grounded response using the Master Prompt
       try {
-        const ai2 = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || process.env.API_KEY });
-        const fallbackResponse = await ai2.models.generateContent({
-          model: 'gemini-2.0-flash',
-          contents: `${query}\n\nRespond as Devansh Mehta, Elite Career Architect in professional Hinglish.`
+        const fallbackResponse = await ai.models.generateContent({
+          model: 'gemini-2.5-flash-native-audio-preview-12-2025',
+          contents: `${MASTER_SYSTEM_PROMPT}\n\nUser Question: ${query}`
         });
-        addMessage('assistant', fallbackResponse.text || "I'm analyzing your request...");
+        addMessage('assistant', fallbackResponse.text || "I'm looking into that for you!");
       } catch (fallbackErr) {
-        addMessage('assistant', "My search module encountered an issue, but I can still audit your documents manually!");
+        addMessage('assistant', "Pardon me, had a minor glitch. What were we saying about your career?");
       }
     } finally {
       setIsTyping(false);
@@ -228,9 +227,9 @@ const App: React.FC = () => {
     `;
 
     try {
-      // Use gemini-2.5-flash for better document understanding
+      // Use the unified gemini-2.5-flash-native-audio-preview-12-2025 model
       const result = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.5-flash-native-audio-preview-12-2025',
         contents: { parts: [{ text: prompt }, { inlineData: { mimeType, data: fileData } }] }
       });
       const content = result.text || "";
