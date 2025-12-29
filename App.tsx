@@ -363,60 +363,161 @@ const App: React.FC = () => {
 
     // Dedicated extraction prompt - DO NOT use system prompt here
     const extractionPrompt = `
-You are a resume content extractor. Your job is to extract and analyze the ACTUAL content from this resume document.
+You are a resume content extractor. Extract and analyze the ACTUAL content from this resume document.
 
-IMPORTANT RULES:
-1. ONLY report what is ACTUALLY in the document. DO NOT make up or hallucinate any content.
+CRITICAL RULES:
+1. ONLY report what is ACTUALLY in the document. DO NOT hallucinate.
 2. If something is NOT in the document, say "NOT FOUND" - do not invent it.
-3. Extract the EXACT text, names, dates, companies, skills as they appear.
-4. Be accurate about what visual elements exist (photo, graphics, columns, etc.)
+3. Extract EXACT text, names, dates, companies, skills as they appear.
+4. Be accurate about visual elements (photo, graphics, columns, icons).
 
-EXTRACT THE FOLLOWING:
-
+═══════════════════════════════════════════════════════════════
 ## DOCUMENT ANALYSIS
-- Has Photo: [YES/NO - only say YES if you actually see a photo/image of a person]
-- Layout: [Single column / 2-column / Other]
+═══════════════════════════════════════════════════════════════
+- Has Photo: [YES/NO]
+- Layout: [Single column / 2-column / Modern / Creative / ATS-friendly / Other]
 - Has Graphics/Icons: [YES/NO]
+- Has Tables: [YES/NO]
+- Has Custom Fonts: [YES/NO - if text looks non-standard]
+- File Type Issues: [Any scanning/readability issues detected]
 
+═══════════════════════════════════════════════════════════════
+## CANDIDATE PROFILE TYPE
+═══════════════════════════════════════════════════════════════
+Identify which applies:
+- [ ] Fresher (0-1 year experience)
+- [ ] Early Career (1-3 years)
+- [ ] Mid-Level (3-7 years)
+- [ ] Senior/Lead (7-12 years)
+- [ ] Executive/Director (12+ years)
+- [ ] Career Changer
+- [ ] Freelancer/Consultant
+- [ ] Academic/Researcher
+- [ ] Creative Professional
+- [ ] Technical/IT Professional
+
+═══════════════════════════════════════════════════════════════
 ## EXTRACTED CONTENT
+═══════════════════════════════════════════════════════════════
 
-### Personal Info:
-- Name: [exact name from document]
-- Email: [exact email]
-- Phone: [exact phone]
-- Location: [exact location]
-- LinkedIn/Portfolio: [if present]
+### Personal Information:
+- Full Name: [exact]
+- Email: [exact]
+- Phone: [exact with country code if present]
+- Location: [city, state, country]
+- LinkedIn: [exact URL or NOT FOUND]
+- GitHub: [exact URL or NOT FOUND]
+- Portfolio/Website: [exact URL or NOT FOUND]
+- Other Links: [any other profile links]
 
 ### Professional Summary/Objective:
-[Extract exact text if present, or "NOT FOUND"]
+[Extract EXACT text as written. If not present, say "NOT FOUND"]
 
 ### Work Experience:
-[For each job, extract:
-- Company Name (exact)
-- Role/Title (exact)
-- Duration (exact dates)
-- Bullet points (exact text)]
+[For EACH position, extract:
+- Company Name: [exact]
+- Role/Title: [exact]
+- Employment Type: [Full-time/Part-time/Contract/Internship/Freelance - if mentioned]
+- Duration: [exact dates as written, e.g., "May 2024 - Present"]
+- Location: [if mentioned]
+- Responsibilities/Achievements: [exact bullet points as written]
+]
 
-### Education:
-[Extract exact details]
-
-### Skills:
-[Extract exact skills listed]
+### Internships (if separate from Work Experience):
+[Same format as Work Experience]
 
 ### Projects:
-[Extract exact projects if any]
+[For EACH project:
+- Project Name: [exact]
+- Duration: [if mentioned]
+- Technologies Used: [exact list]
+- Description: [exact text]
+- Links: [GitHub/Live demo if present]
+]
+
+### Education:
+[For EACH qualification:
+- Degree/Qualification: [exact, e.g., "B.Tech in Computer Science"]
+- Institution: [exact name]
+- Duration/Year: [exact]
+- Grade/CGPA/Percentage: [if mentioned]
+- Relevant Coursework: [if mentioned]
+]
+
+### Skills:
+- Technical Skills: [exact list as categorized in resume]
+- Soft Skills: [if mentioned separately]
+- Languages (Programming): [if mentioned]
+- Languages (Speaking): [if mentioned]
+- Tools/Software: [if mentioned]
+- Frameworks: [if mentioned]
 
 ### Certifications:
-[Extract if any]
+[For EACH:
+- Certification Name: [exact]
+- Issuing Organization: [exact]
+- Date: [if mentioned]
+- Credential ID/Link: [if present]
+]
 
-## ATS ISSUES FOUND:
-[List actual issues based on what you SAW, not assumptions]
+### Publications/Research (for academics):
+[If present, extract exact details]
 
-## RECOMMENDED FIXES:
-[Based on ACTUAL content found]
+### Awards/Achievements:
+[If present, extract exact text]
 
-REMEMBER: Only report what is ACTUALLY in the document. If unsure, say "UNCLEAR" not a guess.
+### Volunteer Experience/Extracurriculars:
+[If present, extract exact details]
+
+### Hobbies/Interests:
+[If present, list exactly]
+
+### References:
+[If present or "Available upon request"]
+
+═══════════════════════════════════════════════════════════════
+## ATS COMPATIBILITY ANALYSIS
+═══════════════════════════════════════════════════════════════
+Based on WHAT YOU ACTUALLY SEE:
+
+**Critical Issues (will likely fail ATS):**
+- [ ] Has photo/headshot
+- [ ] Uses tables for layout
+- [ ] Uses multiple columns
+- [ ] Has graphics/icons/charts
+- [ ] Uses text boxes
+- [ ] Has headers/footers with key info
+- [ ] Uses custom/fancy fonts
+
+**Content Issues:**
+- [ ] Missing contact email
+- [ ] Missing phone number
+- [ ] No clear section headings
+- [ ] Dates unclear or missing
+- [ ] Job titles unclear
+- [ ] No quantifiable achievements
+- [ ] Uses "I/me/my" extensively
+- [ ] Spelling/grammar errors spotted
+- [ ] Uses abbreviations without full form
+
+**Formatting Issues:**
+- [ ] Inconsistent date formats
+- [ ] Inconsistent bullet styles
+- [ ] Too short (< 1 page for experienced)
+- [ ] Too long (> 2 pages)
+- [ ] Poor spacing/readability
+
+═══════════════════════════════════════════════════════════════
+## RECOMMENDED FIXES (PRIORITY ORDER)
+═══════════════════════════════════════════════════════════════
+1. [Most critical fix based on actual issues]
+2. [Second priority]
+3. [Third priority]
+...
+
+REMEMBER: Only report what you ACTUALLY see. Say "NOT FOUND" or "UNCLEAR" if unsure.
 `;
+
 
     try {
       // Use gemini-2.5-flash model for document processing
