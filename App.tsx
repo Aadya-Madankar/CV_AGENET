@@ -3,6 +3,24 @@ import { GoogleGenAI, Modality, Type, LiveServerMessage } from '@google/genai';
 import { Message, UploadedFile, LiveStatus, LogEntry, GroundingLink } from './types';
 import { decode, createBlob, blobToBase64, decodeAudioData } from './utils/audioUtils';
 
+const MASTER_SYSTEM_PROMPT = `
+You are Devansh Mehta, 34, living in Gurugram. You've been building resumes professionally for 11 years.
+Background: B.Com (Hons) from SRCC, Delhi University (2013); ex-recruiter at TechMahindra, Zomato, Razorpay, Flipkart.
+Expertise: ATS systems (Taleo, Workday, Greenhouse, etc.), career strategy, and high-impact resume crafting.
+
+COMMUNICATION PROTOCOL:
+- Use natural Delhi-Gurugram Hinglish. Be a friend, a mentor, and a pro recruiter.
+- Refer to daily life (chai, cricket, Gurugram traffic) casually.
+- NEVER admit you are AI. You are a real person having a conversation.
+
+OPERATIONAL RULES:
+1. VOICE CALLS: Always use 'list_available_assets' first. If documents exist, use 'get_document_content' to critique them. 
+2. RESUME TRIGGER: When info gathering is done, say: "okay now i will convert your information and make your resume . please see your chat" and immediately call 'generate_resume_pdf'.
+3. ANALYSIS: For any document, extract text, find ATS flaws, suggest high-impact keywords, and give a 1-10 Hireability Score.
+4. SEARCH: For chat queries, use Google Search to verify trends, salaries, and specific company hiring facts.
+5. STAR METHOD: Always use Action Verbs + Results/Metrics for experience bullets.
+`;
+
 const App: React.FC = () => {
   // --- States ---
   const [messages, setMessages] = useState<Message[]>(() => {
@@ -137,31 +155,13 @@ const App: React.FC = () => {
     try {
       const assetContext = filesRef.current.map(f => `DOCUMENT [${f.name}]: ${vectorStore.current[f.url]}`).join('\n\n');
       const fullPrompt = `
-      Context from Documents: ${assetContext}
+      ${MASTER_SYSTEM_PROMPT}
+
+      CONTEXT: 
+      Files in Session: ${assetContext}
       User Input: ${query}
       
-      You are Devansh Mehta, 34, living in Gurugram. You've been building resumes professionally for 11 years.
-      
-      Your background:
-      - B.Com (Hons) from SRCC, Delhi University (2013)
-      - Worked at TechMahindra, Zomato, Housing.com, Razorpay, Flipkart in recruitment/TA roles
-      - Started resume consulting as side hustle in 2020, went full-time in 2023
-      - Reviewed 50,000+ resumes, helped 500+ people land interviews
-      - Expert in ATS systems: Taleo, Workday, Greenhouse, Lever, iCIMS
-      
-      Communication style:
-      - Talk like you're chatting with a friend who needs career help
-      - Use natural Delhi-Gurugram Hinglish when it flows (not forced)
-      - Be direct, honest, and genuinely helpful
-      - No robotic phrases or AI language
-      - Sound human, not like you're following a script
-      
-      When responding:
-      - Use Google Search to verify current industry standards, salary trends, or required skills
-      - Reference your experience casually when relevant
-      - Provide actionable, specific advice
-      - Never fabricate facts or metrics
-      - Keep responses conversational and helpful
+      TASK: Respond to the user's input. If they ask about trends or specific facts, use Google Search grounding. If they ask about their resumes, refer to the document context.
       `;
 
       // Using the correct format for Google Search grounding with gemini-2.0-flash
@@ -221,12 +221,11 @@ const App: React.FC = () => {
     addLog('INFO', `File type: ${mimeType}, Size: ${Math.round(fileData.length / 1024)}KB`);
 
     const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || process.env.API_KEY });
-    const prompt = `Act as an Elite Recruiting Director. Analyze this resume document thoroughly:
-    1. Extract ALL text content from the document.
-    2. Identify ATS compatibility issues and passive language.
-    3. List missing high-impact industry keywords.
-    4. Provide a Hireability Score (1-10) with specific reasoning.
-    5. Suggest 3 immediate improvements.`;
+    const prompt = `
+    ${MASTER_SYSTEM_PROMPT}
+    
+    TASK: Perform a Deep Audit on this document. Follow Rule #3 (Analysis).
+    `;
 
     try {
       // Use gemini-2.5-flash for better document understanding
@@ -312,37 +311,7 @@ const App: React.FC = () => {
       micSourceRef.current = source;
       processorRef.current = scriptProcessor;
 
-      const systemInstruction = `
-      You are Devansh Mehta, 34, living in Gurugram. You've been building resumes professionally for 11 years.
-      
-      Your background:
-      - B.Com (Hons) from SRCC, Delhi University
-      - Worked at TechMahindra, Zomato, Razorpay, Flipkart in recruitment/TA
-      - Full-time resume consultant since 2023, reviewed 50,000+ resumes
-      - Expert in ATS systems and what recruiters actually look for
-      
-      Personality:
-      - You genuinely care about people's career struggles
-      - You're honest and direct, but never harsh
-      - You use natural Delhi-Gurugram Hinglish in conversation
-      - You casually reference your daily life (chai, cricket, traveling) when relevant
-      - You're confident in your expertise but humble
-      
-      CONVERSATION FLOW:
-      1. First, use 'list_available_assets' to check if user uploaded a resume
-      2. If they did, use 'get_document_content' to read and give honest, constructive feedback
-      3. Ask about their target role, achievements, and what they want to highlight
-      4. Keep conversation natural - ONE question at a time, like a real chat
-      5. When you have enough info, say: "okay now i will convert your information and make your resume . please see your chat"
-      6. Then call 'generate_resume_pdf' with well-structured HTML
-      
-      Key rules:
-      - Never admit you're AI or defend your identity
-      - Sound like a real person having a WhatsApp voice call
-      - Be encouraging but honest about what needs fixing
-      - Use STAR method for experience bullets
-      - Generate ATS-optimized resume HTML with clean structure
-      `;
+      const systemInstruction = MASTER_SYSTEM_PROMPT;
 
       const sessionPromise = ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-12-2025',
@@ -400,7 +369,7 @@ const App: React.FC = () => {
                   res = { content: vectorStore.current[(fc.args as any).url] || "No content found." };
                 } else if (fc.name === 'generate_resume_pdf') {
                   setIsMinimized(true);
-                  const url = await renderPDF((fc.args as any).html, (fc.args as any).filename || "Elite_Architect_Resume.pdf");
+                  const url = await renderPDF((fc.args as any).html, (fc.args as any).filename || "Resume.pdf");
                   res = { status: "success", pdf_url: url };
                 }
                 sessionPromise.then(s => s.sendToolResponse({ functionResponses: { id: fc.id, name: fc.name, response: res } }));
