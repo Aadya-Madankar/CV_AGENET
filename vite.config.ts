@@ -7,6 +7,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
+    // Point to new src structure
+    root: '.',
     server: {
       port: 3000,
       host: '0.0.0.0',
@@ -22,6 +24,9 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
+        '@backend': path.resolve(__dirname, './src/backend'),
+        '@frontend': path.resolve(__dirname, './src/frontend'),
+        '@utils': path.resolve(__dirname, './src/utils'),
       }
     },
     build: {

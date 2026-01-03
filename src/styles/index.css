@@ -1,0 +1,301 @@
+/* CV Voice Agent - Main Stylesheet */
+/* Responsive Design System for Career Architect */
+
+/* Base Styles */
+* {
+    box-sizing: border-box;
+}
+
+/* Message Bubbles */
+.msg-user {
+    background: linear-gradient(135deg, #dcfce7 0%, #d1fae5 100%);
+    border-radius: 18px 18px 4px 18px;
+}
+
+.msg-assistant {
+    background: #ffffff;
+    border-radius: 18px 18px 18px 4px;
+}
+
+/* Chat Background */
+.chat-bg {
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2310b981' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.5;
+}
+
+/* PDF Card */
+.pdf-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 12px;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.pdf-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* PiP Window */
+.pip-window {
+    width: 140px;
+    height: 180px;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    border: 2px solid #10b981;
+    cursor: grab;
+    z-index: 1000;
+}
+
+/* Pulse Ring Animation */
+.pulse-ring {
+    position: absolute;
+    border: 2px solid #10b981;
+    border-radius: 50%;
+    animation: pulseRing 1.5s infinite;
+}
+
+@keyframes pulseRing {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* Call Button Active State */
+.btn-call-active {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Dot Pulse Animation for Voice */
+.dot-pulse {
+    display: flex;
+    gap: 4px;
+}
+
+.dot-pulse span {
+    width: 6px;
+    height: 6px;
+    background: #10b981;
+    border-radius: 50%;
+    animation: dotPulse 1.4s infinite ease-in-out;
+}
+
+.dot-pulse span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.dot-pulse span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.dot-pulse span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes dotPulse {
+
+    0%,
+    60%,
+    100% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+
+    30% {
+        transform: scale(1.5);
+        opacity: 1;
+    }
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.5);
+}
+
+/* Responsive Toggle for Log Panel */
+.log-panel-toggle {
+    display: none;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 1024px) {
+
+    /* Show toggle button on tablet/mobile */
+    .log-panel-toggle {
+        display: flex;
+    }
+
+    /* Hide log panel by default on mobile */
+    .log-panel {
+        position: fixed;
+        right: -100%;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+        max-width: 360px;
+        transition: right 0.3s ease-in-out;
+        z-index: 200;
+    }
+
+    .log-panel.open {
+        right: 0;
+    }
+
+    /* Adjust chat container */
+    .chat-main {
+        width: 100% !important;
+    }
+}
+
+@media (max-width: 640px) {
+
+    /* Smaller avatar */
+    .avatar-large {
+        width: 100px !important;
+        height: 100px !important;
+    }
+
+    /* Smaller buttons on call screen */
+    .call-buttons {
+        gap: 24px !important;
+    }
+
+    .call-buttons button div {
+        padding: 12px !important;
+    }
+
+    .call-buttons button:nth-child(2) div {
+        padding: 16px !important;
+    }
+
+    /* Adjust message bubbles */
+    .message-bubble {
+        max-width: 90% !important;
+    }
+
+    /* Adjust header */
+    .mobile-header {
+        padding: 8px 12px !important;
+    }
+
+    .mobile-header h1 {
+        font-size: 14px !important;
+    }
+
+    /* Adjust input area */
+    .input-area {
+        padding: 8px !important;
+        gap: 8px !important;
+    }
+
+    .input-area input {
+        font-size: 14px !important;
+        padding: 8px 12px !important;
+    }
+
+    /* PiP window smaller on mobile */
+    .pip-window {
+        width: 100px !important;
+        height: 130px !important;
+    }
+
+    .pip-window img {
+        width: 48px !important;
+        height: 48px !important;
+    }
+}
+
+/* Animate-in utilities */
+.animate-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.slide-in-from-bottom-2 {
+    animation: slideInBottom 0.2s ease-out;
+}
+
+.slide-in-from-right-4 {
+    animation: slideInRight 0.3s ease-out;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideInBottom {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Loading shimmer */
+.shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
