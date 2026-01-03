@@ -48,3 +48,13 @@ ehthumbs.db
 # Archive files
 *.zip
 *.tar.gz
+
+# User uploaded files (resumes, etc.)
+*.pdf
+*.doc
+*.docx
+
+# Temporary/test files
+metadata.json
+technical_docs.txt
+tool.md

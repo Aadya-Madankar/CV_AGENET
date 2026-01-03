@@ -1,7 +1,0 @@
-{
-  "name": "Gemini AI Resume Architect",
-  "description": "A conversational AI agent that helps you build professional resumes through voice and document analysis. Upload your existing resume, talk to the agent in real-time, and generate a polished PDF output.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
-}
