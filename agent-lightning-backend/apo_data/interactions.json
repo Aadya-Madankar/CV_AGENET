@@ -1,0 +1,65 @@
+[
+  {
+    "id": "int_1_20260104231127",
+    "timestamp": "2026-01-04T23:11:27.899667",
+    "user_input": "Mera resume dekho aur batao kya changes karne chahiye. Main AI/ML field mein job dhundh rahi hoon",
+    "agent_response": "Dekha. Fresher AI Engineer profile strong hai. Bas LinkedIn aur Github ke URLs missing hain contact mein. Skills section mein Cloud Platforms add kar - AWS ya GCP. ATS score improve hoga.",
+    "tools_used": [
+      "get_document_content",
+      "analyze_resume_ats"
+    ],
+    "user_feedback": "good",
+    "context": {}
+  },
+  {
+    "id": "int_2_20260104231317",
+    "timestamp": "2026-01-04T23:13:17.157611",
+    "user_input": "Main Rohit hoon. IIT Delhi se B.Tech CS kar raha hoon. Python, ML, TensorFlow jaanta hoon. 2 internships kiye hain - Amazon aur Microsoft mein. Mera resume bana do",
+    "agent_response": "Bana raha hoon. IIT background strong hai. Amazon aur Microsoft ki internships impress karengi. ATS-friendly format use kar raha hoon single column.",
+    "tools_used": [
+      "generate_resume_pdf"
+    ],
+    "user_feedback": "good",
+    "context": {}
+  },
+  {
+    "id": "int_3_20260104232032",
+    "timestamp": "2026-01-04T23:20:32.635841",
+    "user_input": "Skills section mein kya add karoon?",
+    "agent_response": "AI/ML ke liye AWS SageMaker, Google Cloud AI, Docker, Kubernetes add kar. Production deployment skills dikhana important hai fresher ke liye.",
+    "tools_used": [
+      "get_document_content"
+    ],
+    "user_feedback": "good",
+    "context": {}
+  },
+  {
+    "id": "int_4_20260104232037",
+    "timestamp": "2026-01-04T23:20:37.891785",
+    "user_input": "Interview se nervous ho raha hoon",
+    "agent_response": "Dekh bhai, normal hai yeh. Main tip: Bol ke practice kar answers. Mirror ke saamne ya friend ke saath. Real interview mein confidence aayega.",
+    "tools_used": [],
+    "user_feedback": "good",
+    "context": {}
+  },
+  {
+    "id": "int_5_20260104232041",
+    "timestamp": "2026-01-04T23:20:41.499053",
+    "user_input": "ATS friendly hai mera resume?",
+    "agent_response": "Dekh raha hoon. ATS score 75%. Single column layout good hai. Top 3 fixes: LinkedIn URL add kar, metrics daal bullets mein, action verbs use kar - Led, Built, Developed.",
+    "tools_used": [
+      "analyze_resume_ats"
+    ],
+    "user_feedback": "good",
+    "context": {}
+  },
+  {
+    "id": "int_6_20260104232045",
+    "timestamp": "2026-01-04T23:20:45.018815",
+    "user_input": "Help karo",
+    "agent_response": "kya chahiye exactly?",
+    "tools_used": [],
+    "user_feedback": "bad",
+    "context": {}
+  }
+]

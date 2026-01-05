@@ -9,6 +9,7 @@ interface InputAreaProps {
     inputMessage: string;
     isTyping: boolean;
     showPlusMenu: boolean;
+    isVoiceActive?: boolean;
     onInputChange: (value: string) => void;
     onSend: () => void;
     onTogglePlusMenu: () => void;
@@ -20,6 +21,7 @@ export const InputArea: React.FC<InputAreaProps> = ({
     inputMessage,
     isTyping,
     showPlusMenu,
+    isVoiceActive = false,
     onInputChange,
     onSend,
     onTogglePlusMenu,
@@ -29,6 +31,11 @@ export const InputArea: React.FC<InputAreaProps> = ({
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') onSend();
     };
+
+    const placeholder = isVoiceActive
+        ? "Type here to chat with Devansh (Voice Model)..."
+        : "Search industry trends or audit my career (N8N)...";
+
 
     return (
         <div className="input-area p-3 bg-white/80 backdrop-blur-md border-t border-slate-200 z-20 flex items-center gap-2 sm:gap-3 relative">
@@ -77,8 +84,11 @@ export const InputArea: React.FC<InputAreaProps> = ({
                 value={inputMessage}
                 onChange={(e) => onInputChange(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Search industry trends or audit my career..."
-                className="flex-1 bg-white border border-slate-200 rounded-full px-3 sm:px-4 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/10"
+                placeholder={placeholder}
+                className={`flex-1 bg-white border rounded-full px-3 sm:px-4 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 ${isVoiceActive
+                        ? 'border-emerald-400 focus:ring-emerald-500/20'
+                        : 'border-slate-200 focus:ring-emerald-500/10'
+                    }`}
             />
 
             {/* Send Button */}

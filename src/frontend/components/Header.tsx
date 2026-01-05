@@ -1,6 +1,6 @@
 /**
  * Header Component
- * App header with branding and call button
+ * App header with branding, Improve Prompt button, and call button
  */
 
 import React from 'react';
@@ -11,13 +11,15 @@ interface HeaderProps {
     showLogPanel: boolean;
     onToggleLogPanel: () => void;
     onCallClick: () => void;
+    onOpenLightning?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
     liveStatus,
     showLogPanel,
     onToggleLogPanel,
-    onCallClick
+    onCallClick,
+    onOpenLightning
 }) => {
     return (
         <header className="mobile-header bg-white px-4 py-3 flex items-center justify-between shadow-sm z-20">
@@ -38,6 +40,18 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
+                {/* Improve Prompt Button (Agent Lightning) */}
+                <button
+                    onClick={onOpenLightning}
+                    title="Improve Prompt with Agent Lightning"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-xs shadow-md hover:shadow-lg hover:shadow-amber-500/25 transition-all"
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span className="hidden sm:inline">Improve</span>
+                </button>
+
                 {/* Log Panel Toggle (Mobile) */}
                 <button
                     onClick={onToggleLogPanel}
@@ -52,8 +66,8 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                     onClick={onCallClick}
                     className={`flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full font-bold text-xs shadow-lg transition-all ${liveStatus === LiveStatus.ACTIVE
-                            ? 'bg-emerald-500 text-white animate-pulse'
-                            : 'bg-slate-100 text-slate-600'
+                        ? 'bg-emerald-500 text-white animate-pulse'
+                        : 'bg-slate-100 text-slate-600'
                         }`}
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

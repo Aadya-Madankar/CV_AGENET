@@ -21,6 +21,7 @@ import {
 import { TOOL_DECLARATIONS } from '../tools/toolDefinitions';
 import { handleToolCall } from '../tools/toolHandlers';
 import { generateDateContext } from '../tools/dateUtils';
+import { logInteractionToAPO } from './apoLogger';
 import { decode, createBlob, decodeAudioData } from '../../utils/audioUtils';
 
 /**
@@ -131,10 +132,14 @@ export async function createVoiceSession(
     refs: VoiceSessionRefs,
     onSessionReady: (sessionPromise: Promise<any>) => void
 ): Promise<void> {
-    const { apiKey, voiceName = DEFAULT_VOICE } = config;
+    const { apiKey, voiceName = DEFAULT_VOICE, enableAPO = false } = config;
     const { setLiveStatus, addLog, addMessage, onTranscription } = context;
 
+    // Track tools used in current turn for APO logging
+    let currentTurnTools: string[] = [];
+
     addLog('INFO', 'Synchronizing with Voice Audit Core...');
+    if (enableAPO) addLog('INFO', '📊 APO Logging: ENABLED');
     setLiveStatus(LiveStatus.CONNECTING);
 
     const ai = new GoogleGenAI({ apiKey });
@@ -189,6 +194,9 @@ export async function createVoiceSession(
                     for (const fc of msg.toolCall.functionCalls) {
                         addLog('TOOL', `Executing Architect Tool: ${fc.name}`);
 
+                        // Track tool for APO logging
+                        currentTurnTools.push(fc.name);
+
                         const res = await handleToolCall(fc.name, fc.args as Record<string, any>, {
                             files: context.files,
                             vectorStore: context.vectorStore,
@@ -213,7 +221,23 @@ export async function createVoiceSession(
                     if (transcriptionBuffer.user) addMessage('user', transcriptionBuffer.user);
                     if (transcriptionBuffer.agent) addMessage('assistant', transcriptionBuffer.agent);
                     onTranscription(transcriptionBuffer.user, transcriptionBuffer.agent);
+
+                    // Auto-log to APO if enabled
+                    if (enableAPO && transcriptionBuffer.user && transcriptionBuffer.agent) {
+                        logInteractionToAPO(
+                            transcriptionBuffer.user,
+                            transcriptionBuffer.agent,
+                            [...currentTurnTools]
+                        ).then(result => {
+                            if (result.success) {
+                                addLog('INFO', `📊 APO: Logged interaction ${result.interaction_id}`);
+                            }
+                        });
+                    }
+
+                    // Reset for next turn
                     transcriptionBuffer = { user: '', agent: '' };
+                    currentTurnTools = [];
                 }
 
                 if (msg.serverContent?.inputTranscription) {
@@ -294,4 +318,37 @@ export function sendAudioInput(
             /* ignore send errors */
         }
     });
+}
+
+/**
+ * Send text input to voice session
+ * This allows typing to the voice model instead of speaking
+ */
+export async function sendTextToVoice(
+    text: string,
+    sessionPromise: Promise<any> | null,
+    liveStatus: LiveStatus
+): Promise<boolean> {
+    if (liveStatus !== LiveStatus.ACTIVE || !sessionPromise) {
+        console.log('Voice session not active, cannot send text');
+        return false;
+    }
+
+    try {
+        const session = await sessionPromise;
+        // Send text content to the live session
+        // The model will respond with voice
+        await session.sendClientContent({
+            turns: [{
+                role: 'user',
+                parts: [{ text }]
+            }],
+            turnComplete: true
+        });
+        console.log('Text sent to voice session:', text);
+        return true;
+    } catch (err) {
+        console.error('Failed to send text to voice:', err);
+        return false;
+    }
 }

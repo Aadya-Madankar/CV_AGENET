@@ -28,37 +28,49 @@ A production-ready voice AI application that provides career coaching and resume
 - PDF resume generation from templates
 - Section-by-section updates
 
+### ⚡ Agent Lightning (Prompt Optimization)
+- **Automatic Prompt Optimization (APO)** system
+- Learning from user interactions
+- Version control for prompts
+- Developer tool for improving AI responses
+
 ---
 
 ## 🏗️ Architecture
 
 ```
-src/
-├── backend/
-│   ├── functions/
-│   │   ├── documentProcessor.ts   # Resume extraction (Gemini Flash)
-│   │   ├── n8nService.ts          # Chat via N8N webhook
-│   │   ├── pdfGenerator.ts        # PDF creation
-│   │   └── voiceSession.ts        # Gemini Live API voice
-│   ├── models/
-│   │   ├── voiceModel.ts          # Voice model config
-│   │   ├── documentModel.ts       # Document model config
-│   │   ├── prompts.ts             # AI system prompts
-│   │   └── types.ts               # TypeScript interfaces
-│   └── tools/
-│       ├── toolDefinitions.ts     # Voice agent tools
-│       └── toolHandlers.ts        # Tool execution logic
-├── frontend/
-│   └── components/
-│       ├── ChatPanel.tsx          # Message display
-│       ├── Header.tsx             # App header
-│       ├── InputArea.tsx          # Input controls
-│       ├── LogPanel.tsx           # Real-time logs
-│       └── VoiceOverlay.tsx       # Voice call UI
-├── styles/
-│   └── index.css                  # Global styles
-└── utils/
-    └── audioUtils.ts              # Audio processing helpers
+cv_voice_agent/
+├── src/
+│   ├── backend/
+│   │   ├── functions/
+│   │   │   ├── documentProcessor.ts   # Resume extraction
+│   │   │   ├── n8nService.ts          # Chat via N8N
+│   │   │   ├── pdfGenerator.ts        # PDF creation
+│   │   │   ├── voiceSession.ts        # Gemini Live API
+│   │   │   ├── apoLogger.ts           # APO interaction logging
+│   │   │   └── apoService.ts          # APO frontend service
+│   │   ├── models/
+│   │   │   ├── prompts.ts             # AI system prompts
+│   │   │   └── types.ts               # TypeScript interfaces
+│   │   └── tools/
+│   │       ├── toolDefinitions.ts     # Voice agent tools
+│   │       └── toolHandlers.ts        # Tool execution
+│   ├── frontend/
+│   │   └── components/
+│   │       ├── ChatPanel.tsx
+│   │       ├── Header.tsx
+│   │       ├── InputArea.tsx
+│   │       ├── LogPanel.tsx
+│   │       ├── VoiceOverlay.tsx
+│   │       └── AgentLightningModal.tsx  # APO UI
+│   └── styles/
+│       └── index.css
+│
+└── agent-lightning-backend/           # Prompt Optimization Server
+    ├── prompt_optimizer.py            # FastAPI server
+    ├── requirements.txt
+    ├── .env.example
+    └── README.md
 ```
 
 ---
@@ -68,11 +80,12 @@ src/
 | Layer | Technology |
 |-------|------------|
 | **Frontend** | React 18, TypeScript |
-| **Voice AI** | Gemini 2.5 Flash Native Audio Preview |
+| **Voice AI** | Gemini 2.5 Flash Native Audio |
 | **Document AI** | Gemini 2.5 Flash |
 | **Chat Backend** | N8N Webhook |
+| **Prompt Optimization** | Python FastAPI + Gemini |
 | **Build** | Vite |
-| **Styling** | Vanilla CSS |
+| **Styling** | TailwindCSS |
 
 ---
 
@@ -80,7 +93,8 @@ src/
 
 ### Prerequisites
 - Node.js 18+
-- Google AI API Key with Gemini Live API access
+- Python 3.10+ (for Agent Lightning)
+- Google AI API Key with Gemini access
 - (Optional) N8N webhook URL for chat
 
 ### Installation
@@ -90,7 +104,7 @@ src/
 git clone https://github.com/Aadya-Madankar/CV_AGENET.git
 cd CV_AGENET
 
-# Install dependencies
+# Install frontend dependencies
 npm install
 
 # Create environment file
@@ -112,6 +126,40 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
+
+---
+
+## ⚡ Agent Lightning (Optional)
+
+Agent Lightning is a prompt optimization system for developers. It analyzes user interactions and generates improved prompts.
+
+### Setup
+
+```bash
+# Navigate to Agent Lightning
+cd agent-lightning-backend
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Copy environment file
+cp .env.example .env
+# Add your GEMINI_API_KEY to .env
+
+# Start the server
+python prompt_optimizer.py
+```
+
+### Usage
+
+1. Start both servers (frontend + Agent Lightning)
+2. Use the app normally - interactions are automatically logged
+3. Click **"Improve"** button to open the optimization dashboard
+4. Generate new prompt versions and apply them
+
+> **Note:** Agent Lightning only works on localhost. On production (Vercel), it shows instructions to run locally.
+
+See [agent-lightning-backend/README.md](agent-lightning-backend/README.md) for full documentation.
 
 ---
 
@@ -140,8 +188,8 @@ Open [http://localhost:3000](http://localhost:3000)
 
 | Model | Purpose | File |
 |-------|---------|------|
-| `gemini-2.5-flash-native-audio-preview-12-2025` | Real-time voice | `voiceModel.ts` |
-| `gemini-2.5-flash` | Document processing | `documentModel.ts` |
+| `gemini-2.5-flash-native-audio-preview` | Real-time voice | `voiceModel.ts` |
+| `gemini-2.5-flash` | Document processing & APO | `documentModel.ts` |
 
 ---
 
@@ -152,6 +200,7 @@ Open [http://localhost:3000](http://localhost:3000)
 - Hindi-English mixed language support
 - Direct, actionable career advice
 - Time-aware greetings
+- Version controlled via Agent Lightning
 
 ### Document Extractor
 - Zero hallucination extraction
@@ -165,8 +214,9 @@ Open [http://localhost:3000](http://localhost:3000)
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `VITE_GEMINI_API_KEY` | Google AI API key with Gemini access | Yes |
-| `VITE_N8N_WEBHOOK_URL` | N8N webhook for chat (optional) | No |
+| `VITE_GEMINI_API_KEY` | Google AI API key | Yes |
+| `VITE_N8N_WEBHOOK_URL` | N8N webhook for chat | No |
+| `GEMINI_API_KEY` | For Agent Lightning (in agent-lightning-backend/.env) | For APO |
 
 ---
 

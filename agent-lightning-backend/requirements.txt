@@ -1,0 +1,15 @@
+# Agent Lightning - Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# FastAPI Framework
+fastapi>=0.109.0
+uvicorn>=0.27.0
+
+# Google Gemini AI
+google-genai>=1.0.0
+
+# Environment Variables
+python-dotenv>=1.0.0
+
+# HTTP Requests (for health checks)
+requests>=2.31.0

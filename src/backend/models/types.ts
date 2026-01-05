@@ -119,6 +119,7 @@ export interface N8NChatResponse {
 export interface VoiceSessionConfig {
     apiKey: string;
     voiceName?: string;
+    enableAPO?: boolean;  // Enable automatic prompt optimization logging
 }
 
 export interface VoiceSessionRefs {

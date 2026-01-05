@@ -23,14 +23,14 @@ import {
 } from '../backend/models/types';
 import { generatePDF } from '../backend/functions/pdfGenerator';
 import { processDocument, processRemoteDocument } from '../backend/functions/documentProcessor';
-import { createVoiceSession, stopVoiceSession, sendAudioInput } from '../backend/functions/voiceSession';
+import { createVoiceSession, stopVoiceSession, sendAudioInput, sendTextToVoice } from '../backend/functions/voiceSession';
 import { sendChatMessage } from '../backend/functions/n8nService';
 
 // Utils
 import { blobToBase64 } from '../utils/audioUtils';
 
 // Components
-import { Header, ChatPanel, InputArea, VoiceOverlay, LogPanel } from './components';
+import { Header, ChatPanel, InputArea, VoiceOverlay, LogPanel, AgentLightningModal } from './components';
 
 const App: React.FC = () => {
     // ============================================
@@ -56,6 +56,7 @@ const App: React.FC = () => {
     const [pastedUrl, setPastedUrl] = useState('');
     const [isProcessingUrl, setIsProcessingUrl] = useState(false);
     const [showLogPanel, setShowLogPanel] = useState(false);
+    const [showLightningModal, setShowLightningModal] = useState(false);  // Agent Lightning modal
 
     // ============================================
     // REFS
@@ -139,20 +140,41 @@ const App: React.FC = () => {
         const query = inputMessage;
         setInputMessage('');
         addMessage('user', query);
-        setIsTyping(true);
-        addLog('INFO', `Connecting to Career Architect via N8N...`);
 
-        const result = await sendChatMessage(query, filesRef.current, vectorStore.current);
+        // Route based on voice status
+        if (liveStatus === LiveStatus.ACTIVE) {
+            // Voice is active - send text to Gemini voice model
+            addLog('INFO', `Sending text to Voice Model...`);
+            setIsTyping(true);
 
-        if (result.success) {
-            addMessage('assistant', result.text || "I am analyzing that for you now...");
-            addLog('SUCCESS', `N8N response received successfully.`);
+            const success = await sendTextToVoice(query, sessionPromiseRef.current, liveStatus);
+
+            if (success) {
+                addLog('SUCCESS', `Text sent to voice model. Awaiting voice response...`);
+                // Response will come back through transcription callback
+            } else {
+                addLog('ERROR', `Failed to send text to voice model.`);
+                addMessage('assistant', "Sorry, couldn't send that to the voice session. Try speaking instead.");
+            }
+            setIsTyping(false);
         } else {
-            addMessage('assistant', result.text);
-            addLog('ERROR', `N8N request failed: ${result.error}`);
+            // Voice is not active - send to N8N
+            setIsTyping(true);
+            addLog('INFO', `Connecting to Career Architect via N8N...`);
+
+            const result = await sendChatMessage(query, filesRef.current, vectorStore.current);
+
+            if (result.success) {
+                addMessage('assistant', result.text || "I am analyzing that for you now...");
+                addLog('SUCCESS', `N8N response received successfully.`);
+            } else {
+                addMessage('assistant', result.text);
+                addLog('ERROR', `N8N request failed: ${result.error}`);
+            }
+            setIsTyping(false);
         }
-        setIsTyping(false);
     };
+
 
     // ============================================
     // DOCUMENT PROCESSING
@@ -203,7 +225,8 @@ const App: React.FC = () => {
             await createVoiceSession(
                 {
                     apiKey: import.meta.env.VITE_GEMINI_API_KEY || '',
-                    voiceName: 'Achird'
+                    voiceName: 'Achird',
+                    enableAPO: true  // Always enable APO logging locally
                 },
                 {
                     files: filesRef.current,
@@ -291,6 +314,7 @@ const App: React.FC = () => {
                 <Header
                     liveStatus={liveStatus}
                     showLogPanel={showLogPanel}
+                    onOpenLightning={() => setShowLightningModal(true)}
                     onToggleLogPanel={() => setShowLogPanel(!showLogPanel)}
                     onCallClick={liveStatus === LiveStatus.IDLE ? startCall : () => setIsMinimized(!isMinimized)}
                 />
@@ -315,6 +339,7 @@ const App: React.FC = () => {
                     inputMessage={inputMessage}
                     isTyping={isTyping}
                     showPlusMenu={showPlusMenu}
+                    isVoiceActive={liveStatus === LiveStatus.ACTIVE}
                     onInputChange={setInputMessage}
                     onSend={handleSendMessage}
                     onTogglePlusMenu={() => setShowPlusMenu(!showPlusMenu)}
@@ -346,6 +371,13 @@ const App: React.FC = () => {
                 onClose={() => setShowLogPanel(false)}
                 onClear={() => setLogs([])}
                 logEndRef={logEndRef as React.RefObject<HTMLDivElement>}
+            />
+
+            {/* Agent Lightning Modal */}
+            <AgentLightningModal
+                isOpen={showLightningModal}
+                onClose={() => setShowLightningModal(false)}
+                onLog={addLog}
             />
 
             <input
